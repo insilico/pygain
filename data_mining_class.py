@@ -35,7 +35,7 @@ class DataProperties(object):
         # open file for reading        
         tab_infile = open( infilename,'r')
         # reads all lines at once
-        #self.data = self.tab_infile.readlines().strip('\n')
+        #data = self.tab_infile.readlines().strip('\n')
         self.data = []
         for line in tab_infile:
             line = line.replace('\n', '')
