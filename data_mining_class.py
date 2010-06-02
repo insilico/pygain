@@ -33,14 +33,14 @@ class DataProperties(object):
         # define infilename as an attribute for run_relief
         self.infilename = infilename
         # open file for reading        
-        self.tab_infile = open( infilename,'r')
+        tab_infile = open( infilename,'r')
         # reads all lines at once
         #self.data = self.tab_infile.readlines().strip('\n')
         self.data = []
-        for line in self.tab_infile:
+        for line in tab_infile:
             line = line.replace('\n', '')
             self.data.append(line)
-        self.tab_infile.close()
+        tab_infile.close()
         # creates list of lists of self.data
         self.row_lists = [line.split('\t') for line in self.data]
         # pair up parallel items in lists
