@@ -58,7 +58,6 @@ class DataProperties(object):
         for row in self.data_transpose:
             attribute_key = string.strip(row[0])
             data_str = row[1:]
-            data_str = string.replace(str(data_str),'\n','')
             #print attribute_key
             #print data_str
             self.attribute_dictionary[attribute_key] = data_str
@@ -68,10 +67,6 @@ class DataProperties(object):
     def entropy(self,attribute_key):
         # calculate entropy of attribute given its key name
         data_str = self.attribute_dictionary[attribute_key]
-        data_str = string.replace(str(data_str),'(','')
-        data_str = string.replace(str(data_str),')','')
-        data_str = string.replace(str(data_str),' ','')
-        data_str = data_str.split(',')
         # frequency table
         freq_dict = {}
         for val in data_str:
@@ -93,14 +88,6 @@ class DataProperties(object):
         # calculate joint entropy given attr key names
         data_str1 = self.attribute_dictionary[attribute_key1]
         data_str2 = self.attribute_dictionary[attribute_key2]
-        data_str1 = string.replace(str(data_str1),'(','')
-        data_str1 = string.replace(str(data_str1),')','')
-        data_str1 = string.replace(str(data_str1),' ','')        
-        data_str2 = string.replace(str(data_str2),'(','')
-        data_str2 = string.replace(str(data_str2),')','')
-        data_str2 = string.replace(str(data_str2),' ','')
-        data_str1 = data_str1.split(',')
-        data_str2 = data_str2.split(',')              
   
         # frequency table
         combo_freq_dict = {}
@@ -127,18 +114,6 @@ class DataProperties(object):
         data_str1  = self.attribute_dictionary[attribute_key1]
         data_str2  = self.attribute_dictionary[attribute_key2]
         data_class = self.attribute_dictionary[self.status_key]
-        data_str1  = string.replace(str(data_str1),'(','')
-        data_str1  = string.replace(str(data_str1),')','')
-        data_str1  = string.replace(str(data_str1),' ','')        
-        data_str2  = string.replace(str(data_str2),'(','')
-        data_str2  = string.replace(str(data_str2),')','')
-        data_str2  = string.replace(str(data_str2),' ','')
-        data_class = string.replace(str(data_class),'(','')
-        data_class = string.replace(str(data_class),')','')
-        data_class = string.replace(str(data_class),' ','')
-        data_str1  = data_str1.split(',')
-        data_str2  = data_str2.split(',')
-        data_class = data_class.split(',')
 
         ## Compute H(ABC)
         # frequency table
