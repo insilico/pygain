@@ -47,20 +47,22 @@ class DataProperties(object):
             # remember when constructing data set with sampled attributes
             # to include status_key at the end
 
-    def sort_by_value(self, d):
-		""" Returns the keys of dictionary d sorted by their values """
-		items=d.items()
-		backitems=[ [v[1],v[0]] for v in items]
-		backitems.sort()
-		return [ backitems[i][1] for i in range(0,len(backitems))]
+#    def sort_by_value(self, d):
+#		""" Returns the keys of dictionary d sorted by their values """
+#		items=d.items()
+#		backitems=[ [v[1],v[0]] for v in items]
+#		backitems.sort()
+#		return [ backitems[i][1] for i in range(0,len(backitems))]
 
-    def sort_high_to_low(self, d):
-		""" Returns the keys of dictionary d sorted by their values """
-		items=d.items()
-		backitems=[ [v[1],v[0]] for v in items]
-		backitems.sort()
-		backitems.reverse() # sort from high to low
-		return [ backitems[i][1] for i in range(0,len(backitems))]
+
+    def sort_value(self, d, n):
+        """ Returns the keys of dictionary d sorted by their values """
+        items=d.items()
+        backitems=[ [v[1],v[0]] for v in items]
+        backitems.sort()
+        if n == 1:
+		   backitems.reverse() # sort from high to low
+        return [ backitems[i][1] for i in range(0,len(backitems))]
 
     def entropy(self,attribute_key):
         # calculate entropy of attribute given its key name
@@ -92,7 +94,7 @@ class DataProperties(object):
         for x in zip(data_str1,data_str2):
             combination = ",".join(x)
             if combo_freq_dict.has_key(combination):
-                combo_freq_dict[combination] = combo_freq_dict[combination] + 1
+                combo_freq_dict[combination] += 1
             else:
                 combo_freq_dict[combination] = 1
         # probability table
@@ -102,7 +104,7 @@ class DataProperties(object):
         joint_entropy = 0.0
         for key in combo_prob_dict:
             p = combo_prob_dict[key]
-            joint_entropy = joint_entropy - p*math.log(p,2)
+            joint_entropy -= p*math.log(p,2)
         return joint_entropy 
 
     def interaction_information(self,attribute_key1,attribute_key2):
@@ -154,7 +156,7 @@ class DataProperties(object):
         #for key in attrs_minus_class_keys:
         #    self.mutual_info_dict[key] = self.mutual_info_dict[key]/float(norm)
         #print 'entropies: ', self.entropy_dict
-        MI_sorted_attrs = self.sort_high_to_low(self.mutual_info_dict)
+        MI_sorted_attrs = self.sort_value(self.mutual_info_dict,1)
         return (self.mutual_info_dict, MI_sorted_attrs)
         #print 'sorted mutual informations: ', sorted_MI
 
@@ -272,9 +274,8 @@ class DataProperties(object):
        for (k,v) in zip(self.attribute_list,energies):
            energy_dictionary[k] = v
        # sort by score
-       sorted_energies = sort_by_value(energy_dictionary) 
+       sorted_energies = sort_value(energy_dictionary) 
        return (ave_energy, max(energies), energy_dictionary, sorted_energies)
-
 
     def irelieff_sort(self, **kwds):
        irelieff_cmd = './irelieff ' + self.infilename + ' ' + \
