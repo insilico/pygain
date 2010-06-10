@@ -97,8 +97,8 @@ class DataProperties(object):
         for key in combo_prob_dict:
             p = combo_prob_dict[key]
             joint_entropy -= p*math.log(p,2)
-        return joint_entropy 
-
+        return joint_entropy
+        
     def interaction_information(self,attribute_key1,attribute_key2):
         # I(A;B;C)=I(A;B|C)-I(A;B)
         # I(A;B;C)=H(AB)+H(BC)+H(AC)-H(A)-H(B)-H(C)-H(ABC)
@@ -289,5 +289,5 @@ class DataProperties(object):
        for (k,v) in zip(self.attribute_list,iresult_list):
            iresults_dictionary[k] = v
        # sort by score
-       sorted_attributes = sort_high_to_low(iresults_dictionary) 
+       sorted_attributes = sort_value(iresults_dictionary,1) 
        return (sorted_attributes)
