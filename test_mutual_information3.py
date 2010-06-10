@@ -17,8 +17,6 @@ full_data = DataProperties(infilename)
 #print 'attributes = ',       full_data.num_attributes
 #print 'status key = ',       full_data.status_key
 
-
-
 (mutual_info_dict, MI_sorted) = full_data.mutual_information()
 #print '\t mutual info \t chi-square \n'
 #for i in range(full_data.num_attributes):
@@ -41,14 +39,16 @@ for i in range(num_vars):
     name1=var_name_list[i]
     for j in range(num_vars):
         name2=var_name_list[j]
-        if j<=i:
+        if j<i:
             inter_info_score = 0.0
         else:
             inter_info_score=full_data.interaction_information(name1,name2)
+        if j==i:
+            inter_info_score=-1*(full_data.interaction_information(name1,name2))
         if abs(inter_info_score) < cutoff:
             inter_info_score=0.0
-        name1_interactions.append(str(inter_info_score))        
-    print '\t'.join(name1_interactions)       
+        name1_interactions.append(str(inter_info_score))      
+    print '\t'.join(name1_interactions)
 
 # directed
 #for name1 in var_name_list:
