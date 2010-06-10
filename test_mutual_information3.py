@@ -11,14 +11,6 @@ except:
     sys.exit(1)
 # python test_data_mining.py cytokines.tab > output.txt
 
-def sort_by_value(d):
-    """ Returns the keys of dictionary d sorted by their values """
-    items=d.items()
-    backitems=[ [v[1],v[0]] for v in items]
-    backitems.sort()
-    #max_value = backitems[0][0] # also return max value
-    return [ backitems[i][1] for i in range(0,len(backitems))]
-
 #print 'Output created by python ', sys.argv[0], ' ', infilename
 full_data = DataProperties(infilename)
 #print 'instances = ',        full_data.num_instances
