@@ -1,22 +1,6 @@
 #!/usr/bin/env python
 import sys, os, string, re, random, math
 
-def sort_by_value(d):
-    """ Returns the keys of dictionary d sorted by their values """
-    items=d.items()
-    backitems=[ [v[1],v[0]] for v in items]
-    backitems.sort()
-    #max_value = backitems[0][0] # also return max value
-    return [ backitems[i][1] for i in range(0,len(backitems))]
-
-def sort_high_to_low(d):
-    """ Returns the keys of dictionary d sorted by their values """
-    items=d.items()
-    backitems=[ [v[1],v[0]] for v in items]
-    backitems.sort()
-    backitems.reverse() # sort from high to low
-    return [ backitems[i][1] for i in range(0,len(backitems))]
-
 class DataProperties(object):
     """
     Data Mining Class
@@ -62,6 +46,21 @@ class DataProperties(object):
             self.attribute_dictionary[attribute_key] = data_str
             # remember when constructing data set with sampled attributes
             # to include status_key at the end
+
+    def sort_by_value(self, d):
+		""" Returns the keys of dictionary d sorted by their values """
+		items=d.items()
+		backitems=[ [v[1],v[0]] for v in items]
+		backitems.sort()
+		return [ backitems[i][1] for i in range(0,len(backitems))]
+
+    def sort_high_to_low(self, d):
+		""" Returns the keys of dictionary d sorted by their values """
+		items=d.items()
+		backitems=[ [v[1],v[0]] for v in items]
+		backitems.sort()
+		backitems.reverse() # sort from high to low
+		return [ backitems[i][1] for i in range(0,len(backitems))]
 
     def entropy(self,attribute_key):
         # calculate entropy of attribute given its key name
@@ -155,7 +154,7 @@ class DataProperties(object):
         #for key in attrs_minus_class_keys:
         #    self.mutual_info_dict[key] = self.mutual_info_dict[key]/float(norm)
         #print 'entropies: ', self.entropy_dict
-        MI_sorted_attrs = sort_high_to_low(self.mutual_info_dict)
+        MI_sorted_attrs = self.sort_high_to_low(self.mutual_info_dict)
         return (self.mutual_info_dict, MI_sorted_attrs)
         #print 'sorted mutual informations: ', sorted_MI
 
@@ -226,7 +225,7 @@ class DataProperties(object):
         self.chi2_dict = {}
         for key in attrs_minus_class_keys:
             self.chi2_dict[key] = self.individual_chi_square(key,self.status_key)
-        chi2_sorted_attrs = sort_high_to_low(self.chi2_dict)
+        chi2_sorted_attrs = self.sort_high_to_low(self.chi2_dict)
         return (self.chi2_dict, chi2_sorted_attrs)
         #print 'sorted mutual informations: ', sorted_MI
             
