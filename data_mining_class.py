@@ -47,14 +47,6 @@ class DataProperties(object):
             # remember when constructing data set with sampled attributes
             # to include status_key at the end
 
-#    def sort_by_value(self, d):
-#		""" Returns the keys of dictionary d sorted by their values """
-#		items=d.items()
-#		backitems=[ [v[1],v[0]] for v in items]
-#		backitems.sort()
-#		return [ backitems[i][1] for i in range(0,len(backitems))]
-
-
     def sort_value(self, d, n):
         """ Returns the keys of dictionary d sorted by their values """
         items=d.items()
