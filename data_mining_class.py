@@ -48,7 +48,8 @@ class DataProperties(object):
             # to include status_key at the end
 
     def sort_value(self, d, n):
-        """ Returns the keys of dictionary d sorted by their values """
+        """ Returns the keys of dictionary d sorted by their values, default is low to high,
+	if parameter n = 1, function sorts high to low """
         items=d.items()
         backitems=[ [v[1],v[0]] for v in items]
         backitems.sort()
@@ -219,7 +220,7 @@ class DataProperties(object):
         self.chi2_dict = {}
         for key in attrs_minus_class_keys:
             self.chi2_dict[key] = self.individual_chi_square(key,self.status_key)
-        chi2_sorted_attrs = self.sort_high_to_low(self.chi2_dict)
+        chi2_sorted_attrs = self.sort_value(self.chi2_dict, 1)
         return (self.chi2_dict, chi2_sorted_attrs)
         #print 'sorted mutual informations: ', sorted_MI
             
