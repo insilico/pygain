@@ -48,7 +48,8 @@ class DataProperties(object):
             # to include status_key at the end
 
     def sort_value(self, d, n):
-        """ Returns the keys of dictionary d sorted by their values """
+        """ Returns the keys of dictionary d sorted by their values, default is low to high,
+	if parameter n = 1, function sorts high to low """
         items=d.items()
         backitems=[ [v[1],v[0]] for v in items]
         backitems.sort()
@@ -97,8 +98,8 @@ class DataProperties(object):
         for key in combo_prob_dict:
             p = combo_prob_dict[key]
             joint_entropy -= p*math.log(p,2)
-        return joint_entropy 
-
+        return joint_entropy
+        
     def interaction_information(self,attribute_key1,attribute_key2):
         # I(A;B;C)=I(A;B|C)-I(A;B)
         # I(A;B;C)=H(AB)+H(BC)+H(AC)-H(A)-H(B)-H(C)-H(ABC)
@@ -219,7 +220,7 @@ class DataProperties(object):
         self.chi2_dict = {}
         for key in attrs_minus_class_keys:
             self.chi2_dict[key] = self.individual_chi_square(key,self.status_key)
-        chi2_sorted_attrs = self.sort_high_to_low(self.chi2_dict)
+        chi2_sorted_attrs = self.sort_value(self.chi2_dict, 1)
         return (self.chi2_dict, chi2_sorted_attrs)
         #print 'sorted mutual informations: ', sorted_MI
             
@@ -289,5 +290,5 @@ class DataProperties(object):
        for (k,v) in zip(self.attribute_list,iresult_list):
            iresults_dictionary[k] = v
        # sort by score
-       sorted_attributes = sort_high_to_low(iresults_dictionary) 
+       sorted_attributes = sort_value(iresults_dictionary,1) 
        return (sorted_attributes)
