@@ -47,7 +47,7 @@ for i in range(num_vars):
             inter_info_score=-1*(full_data.interaction_information(name1,name2))
         if abs(inter_info_score) < cutoff:
             inter_info_score=0.0
-        name1_interactions.append(str(inter_info_score))      
+        name1_interactions.append(str(round(inter_info_score,5)))      
     print '\t'.join(name1_interactions)
 
 # directed
