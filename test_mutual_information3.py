@@ -41,10 +41,10 @@ for i in range(num_vars):
         name2=var_name_list[j]
         if j<i:
             inter_info_score = 0.0
+        elif j==i:
+            inter_info_score=-1*(full_data.interaction_information(name1,name2))
         else:
             inter_info_score=full_data.interaction_information(name1,name2)
-        if j==i:
-            inter_info_score=-1*(full_data.interaction_information(name1,name2))
         if abs(inter_info_score) < cutoff:
             inter_info_score=0.0
         name1_interactions.append(str(inter_info_score))      
