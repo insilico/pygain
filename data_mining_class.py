@@ -60,13 +60,13 @@ class DataProperties(object):
 				sys.stdout.write(fltfmt + " " * n_spaces + " " *  colspace)
 			print
    
-	def sort_value(self, d, n):
+	def sort_value(self, d, reverse=False):
 		""" Returns the keys of dictionary d sorted by their values, default is low to high,
-	if parameter n = 1, function sorts high to low """
+	if parameter reverse = True, function sorts high to low """
 		items=d.items()
 		backitems=[ [v[1],v[0]] for v in items]
 		backitems.sort()
-		if n == 1:
+		if reverse:
 		   backitems.reverse() # sort from high to low
 		return [ backitems[i][1] for i in range(0,len(backitems))]
 
@@ -162,7 +162,7 @@ class DataProperties(object):
 		#for key in attrs_minus_class_keys:
 		#	self.mutual_info_dict[key] = self.mutual_info_dict[key]/float(norm)
 		#print 'entropies: ', self.entropy_dict
-		MI_sorted_attrs = self.sort_value(self.mutual_info_dict,1)
+		MI_sorted_attrs = self.sort_value(self.mutual_info_dict,True)
 		return (self.mutual_info_dict, MI_sorted_attrs)
 		#print 'sorted mutual informations: ', sorted_MI
 
@@ -233,7 +233,7 @@ class DataProperties(object):
 		self.chi2_dict = {}
 		for key in attrs_minus_class_keys:
 			self.chi2_dict[key] = self.individual_chi_square(key,self.status_key)
-		chi2_sorted_attrs = self.sort_value(self.chi2_dict, 1)
+		chi2_sorted_attrs = self.sort_value(self.chi2_dict, True)
 		return (self.chi2_dict, chi2_sorted_attrs)
 		#print 'sorted mutual informations: ', sorted_MI
 			
@@ -303,5 +303,5 @@ class DataProperties(object):
 	   for (k,v) in zip(self.attribute_list,iresult_list):
 		   iresults_dictionary[k] = v
 	   # sort by score
-	   sorted_attributes = sort_value(iresults_dictionary,1) 
+	   sorted_attributes = sort_value(iresults_dictionary,True) 
 	   return (sorted_attributes)
