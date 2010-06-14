@@ -45,19 +45,24 @@ class DataProperties(object):
 			# remember when constructing data set with sampled attributes
 			# to include status_key at the end
 
-	def printMatrix(self, header, mat, colspace = 2):
+	def print_matrix(self, header, mat, colspace = 2):
 		"""Prints the GAIN matrix in a nicely formatted fashion."""
 		for name in header:
 			# formatted numbers take up 7 characters
 			# determine spacing based on header column lengths
-			sys.stdout.write(name + " " * max(colspace,7 - len(name) + colspace))
+			# if negative, spaces will be 0
+			n_spaces = 7 - len(name)
+			sys.stdout.write(name + " " * n_spaces)
+			# always add column spaces in between
+			sys.stdout.write(" " * colspace)
 		print
 		for row in range(len(header)):
 			for col in range(len(header)):
-				n_spaces = (len(header[col]) - 7 )
-				# Format values using float formatting rules
+				n_spaces = len(header[col]) - 7
+				# Format matrix values using float formatting rules
 				fltfmt = str("%.5f"%mat[row * len(header) + col])
-				sys.stdout.write(fltfmt + " " * n_spaces + " " *  colspace)
+				sys.stdout.write(fltfmt + " " * n_spaces)
+				sys.stdout.write(" " * colspace)
 			print
    
 	def sort_value(self, d, reverse=False):

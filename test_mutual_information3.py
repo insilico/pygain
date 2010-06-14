@@ -49,7 +49,7 @@ for i in range(num_vars):
 		name1_interactions.append(inter_info_score)
 
 # print matrix to console
-full_data.printMatrix(var_name_list, name1_interactions)
+full_data.print_matrix(var_name_list, name1_interactions)
 
 # directed
 #for name1 in var_name_list:
