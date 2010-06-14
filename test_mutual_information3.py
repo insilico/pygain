@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import sys, os, string, re, random, math
-from data_mining_class_tab import DataProperties
+from data_mining_class import DataProperties
 
 try:
 	infilename  = sys.argv[1]
