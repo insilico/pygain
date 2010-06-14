@@ -20,8 +20,7 @@ class DataProperties(object):
         tab_infile = open( infilename,'r')
         # reads all lines at once
         self.data = []
-        for line in tab_infile: 
-            self.data.append(line.replace('\n', ''))
+        self.data.extend([line.strip() for line in tab_infile])
         tab_infile.close()
         # creates list of lists of self.data
         self.row_lists = [line.split('\t') for line in self.data]
