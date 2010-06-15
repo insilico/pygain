@@ -30,6 +30,55 @@ def count(xs):
 			ret[x] = 1
 	return ret
 
+def cartesian(L,*lists):
+	if not lists:
+		for x in L:
+			yield (x,)
+	else:
+		for x in L:
+			for y in cartesian(lists[0],*lists[1:]):
+				yield (x,) + y
+
+def autoproduct(l,n):
+	return cartesian(*[l for _ in range(n)])
+
+class Entropy:
+	"""An object simulating a memoizing entropy function"""
+	def __init__(self, attributes, num_instances, precompute=0):
+		"""Initialize memoized entropy function.
+
+		Can specify to precompute to a certain depth. For example,
+		precompute = 2 will cache the entropies for all keys, as well
+		as all ordered pairs of keys.
+		"""
+		self.attributes = attributes
+		self.num_instances = num_instances
+		self.cache = {}
+
+		keys = attributes.keys()
+		while precompute > 0:
+			for key in autoproduct(keys,precompute):
+				self.cache[key] = self.entropy(key)
+			precompute -= 1
+
+	def __call__(self, *keys):
+		"""Behaves identically to entropy, but returns cached value, if available."""
+		try:
+			return self.cache[keys]
+		except KeyError:
+			self.cache[keys] = self.entropy(keys)
+			return self.cache[keys]
+	
+	def entropy(self,keys):
+		"""Calculate entropy of attribute(s), given key name(s)"""
+		attrs = [self.attributes[key] for key in keys]
+
+		freqs = count(zip(*attrs))
+
+		probs = [freq / self.num_instances for freq in freqs.itervalues()]
+
+		return sum([-p * math.log(p,2) for p in probs])
+
 class DataProperties(object):
 	"""
 	Data Mining Class
@@ -65,6 +114,8 @@ class DataProperties(object):
 			# remember when constructing data set with sampled attributes
 			# to include status_key at the end
 
+		self.entropy = Entropy(self.attributes,self.num_instances,precompute=2)
+
 	def print_matrix(self, header, mat, colspace = 2, ndigits = 5):
 		"""Prints the GAIN matrix in a nicely formatted fashion."""
 		for name in header:
@@ -95,16 +146,6 @@ class DataProperties(object):
 		if reverse:
 		   backitems.reverse() # sort from high to low
 		return [ backitems[i][1] for i in range(0,len(backitems))]
-
-	def entropy(self,*keys):
-		"""Calculate entropy of attribute(s), given key name(s)"""
-		attrs = [self.attributes[key] for key in keys]
-
-		freqs = count(zip(*attrs))
-
-		probs = [freq / self.num_instances for freq in freqs.itervalues()]
-
-		return sum([-p * math.log(p,2) for p in probs])
 
 	def interaction_information(self, attrA, attrB):
 		# I(A;B;C)=I(A;B|C)-I(A;B)
