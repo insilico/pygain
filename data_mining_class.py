@@ -59,13 +59,9 @@ class DataProperties(object):
 		self.num_instances  = len(data) - 1
 
 		# Create attribute_name -> data dictionary
-		self.attribute_dictionary = {}
+		self.attributes = {}
 		for row in data_transpose:
-			attribute_key = row[0]
-			data_str = row[1:]
-			#print attribute_key
-			#print data_str
-			self.attribute_dictionary[attribute_key] = data_str
+			self.attributes[row[0]] = row[1:]
 			# remember when constructing data set with sampled attributes
 			# to include status_key at the end
 
@@ -100,82 +96,43 @@ class DataProperties(object):
 		   backitems.reverse() # sort from high to low
 		return [ backitems[i][1] for i in range(0,len(backitems))]
 
-	def entropy(self,attribute_key):
-		"""Calculate entropy of attribute, given its key name"""
+	def entropy(self,*keys):
+		"""Calculate entropy of attribute(s), given key name(s)"""
+		attrs = [self.attributes[key] for key in keys]
 
-		# frequency table
-		freq_dict = count(self.attribute_dictionary[attribute_key])
+		freqs = count(zip(*attrs))
 
-		# probabilities
-		probs = [freq / self.num_instances for freq in freq_dict.itervalues()]
+		probs = [freq / self.num_instances for freq in freqs.itervalues()]
 
-		entropy = sum([-p * math.log(p,2) for p in probs])
+		return sum([-p * math.log(p,2) for p in probs])
 
-		return entropy
-
-	def joint_entropy(self,attribute_key1,attribute_key2):
-		# calculate joint entropy given attr key names
-		data_str1 = self.attribute_dictionary[attribute_key1]
-		data_str2 = self.attribute_dictionary[attribute_key2]
-  
-		# frequency table
-		combo_freq_dict = count(zip(data_str1,data_str2))
-
-		probs = [freq / self.num_instances for freq in combo_freq_dict.itervalues()]
-
-		entropy = sum([-p * math.log(p,2) for p in probs])
-
-		return entropy
-		
-	def interaction_information(self,attribute_key1,attribute_key2):
+	def interaction_information(self, attrA, attrB):
 		# I(A;B;C)=I(A;B|C)-I(A;B)
 		# I(A;B;C)=H(AB)+H(BC)+H(AC)-H(A)-H(B)-H(C)-H(ABC)
 		# where C is the class
-		data_str1  = self.attribute_dictionary[attribute_key1]
-		data_str2  = self.attribute_dictionary[attribute_key2]
-		data_class = self.attribute_dictionary[self.status_key]
 
-		## Compute H(ABC)
-		# frequency table
-		combo_freq_dict = {}
-		for x in zip(data_str1,data_str2,data_class):
-			combination = ",".join(x)
-			if combo_freq_dict.has_key(combination):
-				combo_freq_dict[combination] = combo_freq_dict[combination] + 1
-			else:
-				combo_freq_dict[combination] = 1
-		# probability table
-		combo_prob_dict = {}
-		for key in combo_freq_dict:
-			combo_prob_dict[key] = combo_freq_dict[key] / self.num_instances
-		H_ABC = 0.0
-		for key in combo_prob_dict:
-			p = combo_prob_dict[key]
-			H_ABC = H_ABC - p*math.log(p,2)
-		H_AB=self.joint_entropy(attribute_key1,attribute_key2)
-		H_AC=self.joint_entropy(attribute_key1,self.status_key)
-		H_BC=self.joint_entropy(attribute_key2,self.status_key)
-		H_A =self.entropy(attribute_key1)
-		H_B =self.entropy(attribute_key2)
-		H_C =self.entropy(self.status_key)
+		H_ABC	= self.entropy(attrA, attrB, self.status_key)
+		H_AB	= self.entropy(attrA, attrB)
+		H_AC	= self.entropy(attrA, self.status_key)
+		H_BC	= self.entropy(attrB, self.status_key)
+		H_A	= self.entropy(attrA)
+		H_B	= self.entropy(attrB)
+		H_C	= self.entropy(self.status_key)
 		return H_AB+H_BC+H_AC-H_A-H_B-H_C-H_ABC
 		
 	def mutual_information(self):
 		#print 'class entropy: ', self.entropy(self.status_key)
-		attrs_minus_class_keys = []
-		for key in self.attribute_dictionary:
-			if key != self.status_key:
-				attrs_minus_class_keys.append(key)	
+		attrs_minus_class_keys = [key for key in self.attributes if key != self.status_key]
 		self.entropy_dict = {}
 		self.mutual_info_dict = {}
 		#norm = 0  # if you want to normalize I's
 		for key in attrs_minus_class_keys:
 			self.entropy_dict[key]	 = self.entropy(key)
-			self.mutual_info_dict[key] = self.entropy_dict[key] + self.entropy(self.status_key) - self.joint_entropy(key,self.status_key)
+			self.mutual_info_dict[key] = self.entropy_dict[key] + self.entropy(self.status_key) - self.entropy(key,self.status_key)
 		#	norm = norm + self.mutual_info_dict[key]
 		#for key in attrs_minus_class_keys:
 		#	self.mutual_info_dict[key] = self.mutual_info_dict[key] / norm
 		#print 'entropies: ', self.entropy_dict
-		MI_sorted_attrs = self.sort_value(self.mutual_info_dict,True)
+		MI_sorted_attrs = self.sort_value(self.mutual_info_dict,reverse=True)
 		return (self.mutual_info_dict, MI_sorted_attrs)
 		#print 'sorted mutual informations: ', sorted_MI
