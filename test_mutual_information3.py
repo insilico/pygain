@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import sys, os, string, re, random, math
+import sys, os, string, math
 from data_mining_class import DataProperties
 
 try:
