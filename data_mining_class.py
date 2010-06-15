@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 from __future__ import division
-import sys, os, string, re, random, math
-import csv
+import sys, os, string, math, csv
 
 def transpose(a):
 	"""Transpose a list of lists"""
