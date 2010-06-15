@@ -1,5 +1,34 @@
 #!/usr/bin/env python
+from __future__ import division
 import sys, os, string, re, random, math
+import csv
+
+def transpose(a):
+	"""Transpose a list of lists"""
+	# This is mid-level magic. A function can take an arbitrary list of
+	# arguments like so:
+	#	def function(*args):
+	#		...
+	# On the calling end, we can prepend an asterisk to an iterable object
+	# to indicate we want its contents, rather than itself, to be the arguments
+	# to a function.
+	# 
+	# zip() returns a list where the nth element is a tuple of the nth
+	# elements of each argument.
+	#
+	# Thus, the first "row" of output from zip(*a) is the first element of
+	# each list in a.
+	return zip(*a)
+
+def count(xs):
+	"""Return a dictionary with a count for each object in xs"""
+	ret = {}
+	for x in xs:
+		if x in ret:
+			ret[x] += 1
+		else:
+			ret[x] = 1
+	return ret
 
 class DataProperties(object):
 	"""
@@ -14,30 +43,25 @@ class DataProperties(object):
 			
 	"""
 	def __init__(self, infilename):
-		# define infilename as an attribute for run_relief
-		self.infilename = infilename
-		# open file for reading		
-		tab_infile = open( infilename,'r')
-		# reads all lines at once
-		self.data = []
-		self.data.extend([line.strip() for line in tab_infile])
-		tab_infile.close()
-		# creates list of lists of self.data
-		self.row_lists = [line.split('\t') for line in self.data]
-		# pair up parallel items in lists
-		# * has a transposing effect
-		# list of attributes (i.e., first row of data except for last element)
-		self.data_transpose = zip(*self.row_lists)
-		self.attribute_list = self.data[0].split('\t')[0:-1]
+		tsv = open( infilename,'r')
+		reader = csv.reader(tsv, delimiter="\t")
+
+		# CSV readers are iterable, so just pull all of our data in at once.
+		data = [row for row in reader]
+
+		tsv.close()
+
+		data_transpose = transpose(data)
+
 		# status symbol
-		self.status_key = string.strip(self.data[0].split('\t')[-1])
-		# number of attributes and instances
-		self.num_instances  = len(self.data)-1
-		self.num_attributes = len(self.attribute_list)
+		self.status_key = string.strip(data[0][-1])
+
+		self.num_instances  = len(data) - 1
+
 		# Create attribute_name -> data dictionary
 		self.attribute_dictionary = {}
-		for row in self.data_transpose:
-			attribute_key = string.strip(row[0])
+		for row in data_transpose:
+			attribute_key = row[0]
 			data_str = row[1:]
 			#print attribute_key
 			#print data_str
@@ -76,23 +100,16 @@ class DataProperties(object):
 		return [ backitems[i][1] for i in range(0,len(backitems))]
 
 	def entropy(self,attribute_key):
-		# calculate entropy of attribute given its key name
-		data_str = self.attribute_dictionary[attribute_key]
+		"""Calculate entropy of attribute, given its key name"""
+
 		# frequency table
-		freq_dict = {}
-		for val in data_str:
-			if freq_dict.has_key(val):
-				freq_dict[val] = freq_dict[val] + 1
-			else:
-				freq_dict[val] = 1
-		# probability table
-		prob_dict = {}
-		for key in freq_dict:
-			prob_dict[key] = float(freq_dict[key])/self.num_instances
-		entropy = 0
-		for key in prob_dict:
-			p = prob_dict[key]
-			entropy = entropy - p*math.log(p,2)
+		freq_dict = count(self.attribute_dictionary[attribute_key])
+
+		# probabilities
+		probs = [freq / self.num_instances for freq in freq_dict.itervalues()]
+
+		entropy = sum([-p * math.log(p,2) for p in probs])
+
 		return entropy
 
 	def joint_entropy(self,attribute_key1,attribute_key2):
@@ -101,22 +118,13 @@ class DataProperties(object):
 		data_str2 = self.attribute_dictionary[attribute_key2]
   
 		# frequency table
-		combo_freq_dict = {}
-		for x in zip(data_str1,data_str2):
-			combination = ",".join(x)
-			if combo_freq_dict.has_key(combination):
-				combo_freq_dict[combination] += 1
-			else:
-				combo_freq_dict[combination] = 1
-		# probability table
-		combo_prob_dict = {}
-		for key in combo_freq_dict:
-			combo_prob_dict[key] = float(combo_freq_dict[key])/self.num_instances
-		joint_entropy = 0.0
-		for key in combo_prob_dict:
-			p = combo_prob_dict[key]
-			joint_entropy -= p*math.log(p,2)
-		return joint_entropy
+		combo_freq_dict = count(zip(data_str1,data_str2))
+
+		probs = [freq / self.num_instances for freq in combo_freq_dict.itervalues()]
+
+		entropy = sum([-p * math.log(p,2) for p in probs])
+
+		return entropy
 		
 	def interaction_information(self,attribute_key1,attribute_key2):
 		# I(A;B;C)=I(A;B|C)-I(A;B)
@@ -138,7 +146,7 @@ class DataProperties(object):
 		# probability table
 		combo_prob_dict = {}
 		for key in combo_freq_dict:
-			combo_prob_dict[key] = float(combo_freq_dict[key])/self.num_instances
+			combo_prob_dict[key] = combo_freq_dict[key] / self.num_instances
 		H_ABC = 0.0
 		for key in combo_prob_dict:
 			p = combo_prob_dict[key]
@@ -165,7 +173,7 @@ class DataProperties(object):
 			self.mutual_info_dict[key] = self.entropy_dict[key] + self.entropy(self.status_key) - self.joint_entropy(key,self.status_key)
 		#	norm = norm + self.mutual_info_dict[key]
 		#for key in attrs_minus_class_keys:
-		#	self.mutual_info_dict[key] = self.mutual_info_dict[key]/float(norm)
+		#	self.mutual_info_dict[key] = self.mutual_info_dict[key] / norm
 		#print 'entropies: ', self.entropy_dict
 		MI_sorted_attrs = self.sort_value(self.mutual_info_dict,True)
 		return (self.mutual_info_dict, MI_sorted_attrs)
