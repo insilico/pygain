@@ -101,18 +101,18 @@ class DataProperties(object):
 			
 	"""
 	def __init__(self, infilename):
-		tsv = open( infilename,'r')
-		reader = csv.reader(tsv, delimiter="\t")
+		raw = open( infilename,'r')
+		reader = csv.reader(raw, delimiter=" ")
 
 		# CSV readers are iterable, so just pull all of our data in at once.
-		data = [row for row in reader]
+		data = [row[5:] for row in reader]
 
-		tsv.close()
+		raw.close()
 
 		data_transpose = transpose(data)
 
 		# status symbol
-		self.status_key = data[0][-1]
+		self.class_attr = data[0][0]
 
 		# Ignore the header row
 		self.num_instances  = len(data) - 1
@@ -122,7 +122,7 @@ class DataProperties(object):
 		for row in data_transpose:
 			self.attributes[row[0]] = row[1:]
 			# remember when constructing data set with sampled attributes
-			# to include status_key at the end
+			# to include class_attr at the end
 
 		self.entropy = Entropy(self.attributes,self.num_instances,precompute=2)
 
@@ -182,24 +182,22 @@ class DataProperties(object):
 		# I(A;B;C)=H(AB)+H(BC)+H(AC)-H(A)-H(B)-H(C)-H(ABC)
 		# where C is the class
 
-		H_ABC	= self.entropy(attrA, attrB, self.status_key)
+		H_ABC	= self.entropy(attrA, attrB, self.class_attr)
 		H_AB	= self.entropy(attrA, attrB)
-		H_AC	= self.entropy(attrA, self.status_key)
-		H_BC	= self.entropy(attrB, self.status_key)
+		H_AC	= self.entropy(attrA, self.class_attr)
+		H_BC	= self.entropy(attrB, self.class_attr)
 		H_A	= self.entropy(attrA)
 		H_B	= self.entropy(attrB)
-		H_C	= self.entropy(self.status_key)
+		H_C	= self.entropy(self.class_attr)
 		return H_AB+H_BC+H_AC-H_A-H_B-H_C-H_ABC
 		
 	def mutual_information(self):
-		#print 'class entropy: ', self.entropy(self.status_key)
-		attrs_minus_class_keys = [key for key in self.attributes if key != self.status_key]
-		self.entropy_dict = {}
+		#print 'class entropy: ', self.entropy(self.class_attr)
+		attrs_minus_class_keys = [key for key in self.attributes if key != self.class_attr]
 		self.mutual_info_dict = {}
 		#norm = 0  # if you want to normalize I's
 		for key in attrs_minus_class_keys:
-			self.entropy_dict[key]	 = self.entropy(key)
-			self.mutual_info_dict[key] = self.entropy_dict[key] + self.entropy(self.status_key) - self.entropy(key,self.status_key)
+			self.mutual_info_dict[key] = self.entropy(key) + self.entropy(self.class_attr) - self.entropy(key,self.class_attr)
 		#	norm = norm + self.mutual_info_dict[key]
 		#for key in attrs_minus_class_keys:
 		#	self.mutual_info_dict[key] = self.mutual_info_dict[key] / norm
