@@ -19,28 +19,6 @@ def transpose(a):
 	# each list in a.
 	return zip(*a)
 
-def count(xs):
-	"""Return a dictionary with a count for each object in xs"""
-	ret = {}
-	for x in xs:
-		if x in ret:
-			ret[x] += 1
-		else:
-			ret[x] = 1
-	return ret
-
-def cartesian(L,*lists):
-	if not lists:
-		for x in L:
-			yield (x,)
-	else:
-		for x in L:
-			for y in cartesian(lists[0],*lists[1:]):
-				yield (x,) + y
-
-def autoproduct(l,n):
-	return cartesian(*[l for _ in range(n)])
-
 class Entropy:
 	"""An object simulating a memoizing entropy function"""
 	def __init__(self, attributes, num_instances, precompute=0):
@@ -56,27 +34,59 @@ class Entropy:
 
 		keys = attributes.keys()
 		while precompute > 0:
-			for key in autoproduct(keys,precompute):
+			for key in self.uppertrin(sorted(keys),precompute):
 				self.cache[key] = self.entropy(key)
 			precompute -= 1
 
 	def __call__(self, *keys):
 		"""Behaves identically to entropy, but returns cached value, if available."""
-		try:
-			return self.cache[keys]
-		except KeyError:
-			self.cache[keys] = self.entropy(keys)
-			return self.cache[keys]
+
+		# Sorting prevents us from doubling up. If we could 
+		skeys = tuple(sorted(keys))
+		if skeys in self.cache:
+			return self.cache[skeys]
+		else:
+			self.cache[skeys] = self.entropy(skeys)
+			return self.cache[skeys]
 	
 	def entropy(self,keys):
 		"""Calculate entropy of attribute(s), given key name(s)"""
 		attrs = [self.attributes[key] for key in keys]
 
-		freqs = count(zip(*attrs))
+		freqs = self.count(zip(*attrs))
 
 		probs = [freq / self.num_instances for freq in freqs.itervalues()]
 
 		return sum([-p * math.log(p,2) for p in probs])
+
+	def count(self,xs):
+		"""Return a dictionary with a count for each object in xs"""
+		ret = {}
+		for x in xs:
+			if x in ret:
+				ret[x] += 1
+			else:
+				ret[x] = 1
+		return ret
+	
+	def uppertrin(self,L,n):
+		"""Return the upper-triangle of an n-dimensional matrix L^n
+	
+		Returns all tuples of n elements chosen out of L, with
+		replacement, but without permutations. In 2-dimensions,
+		this is the upper-triangular matrix, with the diagonal.
+		"""
+		def tails(tail):
+		        while tail:
+		                head, tail = tail[0], tail[1:]
+		                yield (head, tail)
+	        if n == 1:
+	                for l in L:
+	                        yield (l,)
+	        else:
+	                for a,t in tails(L):
+	                        for b in self.uppertrin([a] + t, n - 1):
+	                                yield (a,) + b
 
 class DataProperties(object):
 	"""
@@ -102,8 +112,9 @@ class DataProperties(object):
 		data_transpose = transpose(data)
 
 		# status symbol
-		self.status_key = string.strip(data[0][-1])
+		self.status_key = data[0][-1]
 
+		# Ignore the header row
 		self.num_instances  = len(data) - 1
 
 		# Create attribute_name -> data dictionary
