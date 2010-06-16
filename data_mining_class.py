@@ -135,6 +135,26 @@ class DataProperties(object):
 				sys.stdout.write(fltfmt + " " * n_spaces)
 				sys.stdout.write(" " * colspace)
 			print
+
+	def calculate_gain(self, header, cutoff = 0.0):
+		"""Computes and returns matrix of GAIN scores.  Scores below the cutoff are set to 0"""
+		# only computes upper triangle and diagonal
+		num_cols = len(header)
+		gain_mat = [] 
+		for i in range(num_cols):
+			name1 = header[i]
+			for j in range(num_cols):
+				name2 = header[j]
+				if j < i:
+					inter_info_score = 0.0
+				elif j == i:
+					inter_info_score = -1 * self.interaction_information(name1,name2)
+				else:
+					inter_info_score = self.interaction_information(name1,name2)
+				if abs(inter_info_score) < cutoff:
+					inter_info_score = 0.0
+				gain_mat.append(inter_info_score)
+		return gain_mat
    
 	def sort_value(self, d, reverse=False):
 		""" Returns the keys of dictionary d sorted by their values, default is low to high,
