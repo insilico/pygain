@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 from __future__ import division
-import sys, os, string, math, csv
+import sys, os, string, math, csv, numpy
+import scipy.stats.distributions as ssd
+from itertools import izip
 
 def transpose(a):
 	"""Transpose a list of lists"""
@@ -19,55 +21,65 @@ def transpose(a):
 	# each list in a.
 	return zip(*a)
 
+def cmp2((a,x),(b,y)):
+	return cmp(x,y)
+
 class Entropy:
 	"""An object simulating a memoizing entropy function"""
-	def __init__(self, attributes, num_instances, precompute=0):
+	def __init__(self, data, class_idx, precompute=0):
 		"""Initialize memoized entropy function.
 
 		Can specify to precompute to a certain depth. For example,
 		precompute = 2 will cache the entropies for all keys, as well
 		as all ordered pairs of keys.
 		"""
-		self.attributes = attributes
-		self.num_instances = num_instances
+		self.data = data
+
+		self.num_instances = len(data[0])
+		
+		# Cache plogp values
+		self.plogp = [0] + [-p * math.log(p,2)
+				for p in (x / self.num_instances
+					 for x in xrange(1, self.num_instances + 1)
+				)]
+
 		self.cache = {}
 
-		keys = attributes.keys()
+		keys = (lambda x: x[:class_idx] + x[class_idx + 1:])(range(len(data)))
+		self.cache[(class_idx,)] = self.entropy((class_idx,))
 		while precompute > 0:
-			for key in self.uppertrin(sorted(keys),precompute):
+			for key in self.uppertrin(keys,precompute):
 				self.cache[key] = self.entropy(key)
+				self.cache[key + (class_idx,)] = self.entropy(key + (class_idx,))
 			precompute -= 1
 
 	def __call__(self, *keys):
 		"""Behaves identically to entropy, but returns cached value, if available."""
 
-		# Sorting prevents us from doubling up. If we could 
-		skeys = tuple(sorted(keys))
-		if skeys in self.cache:
-			return self.cache[skeys]
+		if keys in self.cache:
+			return self.cache[keys]
 		else:
-			self.cache[skeys] = self.entropy(skeys)
-			return self.cache[skeys]
+			self.cache[keys] = self.entropy(keys)
+			return self.cache[keys]
 	
 	def entropy(self,keys):
 		"""Calculate entropy of attribute(s), given key name(s)"""
-		attrs = [self.attributes[key] for key in keys]
+		attrs = (self.data[key] for key in keys)
 
-		freqs = self.count(zip(*attrs))
+		freqs = self.count(izip(*attrs))
 
-		probs = [freq / self.num_instances for freq in freqs.itervalues()]
-
-		return sum([-p * math.log(p,2) for p in probs])
+		return sum(self.plogp[freq] for freq in freqs)
 
 	def count(self,xs):
-		"""Return a dictionary with a count for each object in xs"""
+		"""Return a list of counts of objects in a list"""
 		ret = {}
 		for x in xs:
 			if x in ret:
 				ret[x] += 1
 			else:
 				ret[x] = 1
-		return ret
+
+		return ret.itervalues()
 	
 	def uppertrin(self,L,n):
 		"""Return the upper-triangle of an n-dimensional matrix L^n
@@ -85,7 +97,7 @@ class Entropy:
 	                        yield (l,)
 	        else:
 	                for a,t in tails(L):
-	                        for b in self.uppertrin([a] + t, n - 1):
+	                        for b in self.uppertrin(t, n - 1):
 	                                yield (a,) + b
 
 class DataProperties(object):
@@ -105,30 +117,26 @@ class DataProperties(object):
 		reader = csv.reader(raw, delimiter=" ")
 
 		# CSV readers are iterable, so just pull all of our data in at once.
-		data = [row[5:] for row in reader]
+		self.attributes = reader.next()[5:]
+		rows = [map(self.translate,row[5:]) for row in reader]
 
 		raw.close()
 
-		data_transpose = transpose(data)
+		self.data = transpose(rows)
 
-		# status symbol
-		self.class_attr = data[0][0]
+		self.class_idx = 0
 
-		# Ignore the header row
-		self.num_instances  = len(data) - 1
+		self.entropy = Entropy(self.data,self.class_idx,precompute=2)
 
-		# Create attribute_name -> data dictionary
-		self.attributes = {}
-		for row in data_transpose:
-			self.attributes[row[0]] = row[1:]
-			# remember when constructing data set with sampled attributes
-			# to include class_attr at the end
+	def translate(self,x):
+		if x == "NA":
+			return None
+		return int(x)
 
-		self.entropy = Entropy(self.attributes,self.num_instances,precompute=2)
-
-	def print_matrix(self, header, mat, colspace = 2, ndigits = 5):
+	def print_matrix(self, idcs, mat, colspace = 2, ndigits = 5):
 		"""Prints the GAIN matrix in a nicely formatted fashion."""
-		for name in header:
+		for i in idcs:
+			name = self.attributes[i]
 			# formatted numbers take up ndigits + 2 characters (for 0. in the number )
 			# determine spacing based on header column lengths
 			# if negative, spaces will be 0
@@ -137,71 +145,67 @@ class DataProperties(object):
 			# always add column spaces in between
 			sys.stdout.write(" " * colspace)
 		print
-		for row in range(len(header)):
-			for col in range(len(header)):
-				n_spaces = len(header[col]) - (ndigits + 2) 
+		for i in idcs:
+			for j in idcs:
+				name = self.attributes[j]
+				n_spaces = len(name) - (ndigits + 2) 
 				# Format matrix values using float formatting rules
 				fltstr = "%." + str(ndigits) + "f"
-				fltfmt = str(fltstr%mat[row * len(header) + col])
+				fltfmt = fltstr % mat[i][j]
 				sys.stdout.write(fltfmt + " " * n_spaces)
 				sys.stdout.write(" " * colspace)
 			print
 
-	def calculate_gain(self, header, cutoff = 0.0):
+	def calculate_gain(self, cutoff = 0.0):
 		"""Computes and returns matrix of GAIN scores.  Scores below the cutoff are set to 0"""
-		# only computes upper triangle and diagonal
-		num_cols = len(header)
-		gain_mat = [] 
-		for i in range(num_cols):
-			name1 = header[i]
-			for j in range(num_cols):
-				name2 = header[j]
-				if j < i:
-					inter_info_score = 0.0
-				elif j == i:
-					inter_info_score = -1 * self.interaction_information(name1,name2)
-				else:
-					inter_info_score = self.interaction_information(name1,name2)
-				if abs(inter_info_score) < cutoff:
-					inter_info_score = 0.0
-				gain_mat.append(inter_info_score)
+		attrs = len(self.attributes)
+
+		gain_mat = [[0.0 for j in range(attrs)] for i in range(attrs)]
+		for i in range(attrs):
+			if i == self.class_idx:
+				continue
+
+			gain_mat[i][i] = -self.autointeraction(i)
+
+			for j in range(i+1,attrs):
+				if j == self.class_idx:
+					continue
+				gain_mat[i][j] = self.interaction_information(i,j)
+				gain_mat[j][i] = gain_mat[i][j]
+
 		return gain_mat
-   
+
 	def sort_value(self, d, reverse=False):
-		""" Returns the keys of dictionary d sorted by their values, default is low to high,
+		"""Returns the keys of dictionary d sorted by their values, default is low to high,
 	if parameter reverse = True, function sorts high to low """
-		items=d.items()
-		backitems=[ [v[1],v[0]] for v in items]
-		backitems.sort()
+		items = sorted(d,cmp2)
 		if reverse:
-		   backitems.reverse() # sort from high to low
-		return [ backitems[i][1] for i in range(0,len(backitems))]
+		   items.reverse() # sort from high to low
+		return [item[0] for item in items]
 
 	def interaction_information(self, attrA, attrB):
 		# I(A;B;C)=I(A;B|C)-I(A;B)
 		# I(A;B;C)=H(AB)+H(BC)+H(AC)-H(A)-H(B)-H(C)-H(ABC)
 		# where C is the class
 
-		H_ABC	= self.entropy(attrA, attrB, self.class_attr)
+		H_ABC	= self.entropy(attrA, attrB, self.class_idx)
 		H_AB	= self.entropy(attrA, attrB)
-		H_AC	= self.entropy(attrA, self.class_attr)
-		H_BC	= self.entropy(attrB, self.class_attr)
+		H_AC	= self.entropy(attrA, self.class_idx)
+		H_BC	= self.entropy(attrB, self.class_idx)
 		H_A	= self.entropy(attrA)
 		H_B	= self.entropy(attrB)
-		H_C	= self.entropy(self.class_attr)
+		H_C	= self.entropy(self.class_idx)
 		return H_AB+H_BC+H_AC-H_A-H_B-H_C-H_ABC
-		
+
+	def autointeraction(self, attr):
+		return self.entropy(attr, self.class_idx) - self.entropy(attr) - self.entropy(self.class_idx)
+
 	def mutual_information(self):
-		#print 'class entropy: ', self.entropy(self.class_attr)
-		attrs_minus_class_keys = [key for key in self.attributes if key != self.class_attr]
-		self.mutual_info_dict = {}
-		#norm = 0  # if you want to normalize I's
-		for key in attrs_minus_class_keys:
-			self.mutual_info_dict[key] = self.entropy(key) + self.entropy(self.class_attr) - self.entropy(key,self.class_attr)
-		#	norm = norm + self.mutual_info_dict[key]
-		#for key in attrs_minus_class_keys:
-		#	self.mutual_info_dict[key] = self.mutual_info_dict[key] / norm
-		#print 'entropies: ', self.entropy_dict
-		MI_sorted_attrs = self.sort_value(self.mutual_info_dict,reverse=True)
-		return (self.mutual_info_dict, MI_sorted_attrs)
-		#print 'sorted mutual informations: ', sorted_MI
+
+		idcs = xrange(len(self.attributes))
+
+		return self.sort_value(
+			((i,-self.autointeraction(i))
+				for i in idcs
+					if i != self.class_idx),
+			reverse=True)
