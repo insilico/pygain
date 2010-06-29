@@ -119,6 +119,17 @@ class GAIN:
 			return None
 		return int(x)
 
+	def print_tsv(self, outfile, idcs, mat, ndigits=5):
+		"""Print the GAIN matrix in tab-separated value format"""
+		format = lambda f: "%%.%df" % ndigits % f
+
+		reordered = [[format(mat[i][j]) for i in idcs] for j in idcs]
+		reordered.insert(0,[self.attributes[i] for i in idcs])
+		reordered.append([])
+
+		outfile.write('\n'.join('\t'.join(row) for row in reordered))
+		return
+
 	def print_matrix(self, outfile, idcs, mat, colspace = 2, ndigits = 5):
 		"""Prints the GAIN matrix in a nicely formatted fashion."""
 		for i in idcs:
@@ -198,17 +209,17 @@ class GAIN:
 
 def main(argv):
 	help = """Usage: %s [OPTIONS]
-	
-	Construct GAIN matrix from PLINK RAW file
 
-	Options:
-	    --input	-i	Input file (default: stdin)
-	    --output	-o	Output file (default: stdout)
-	    --help		display this help and exit
-	""" % argv[0].split('/')[-1]
+Construct GAIN matrix from PLINK RAW file
+
+Options:
+    --input	-i	Input file (default: stdin)
+    --output	-o	Output file (default: stdout)
+    --help		display this help and exit
+	""" % argv.pop(0).split('/')[-1]
 
 	try:
-		opts, args = getopt.getopt(argv[1:], "i:o:h",
+		opts, args = getopt.getopt(argv, "i:o:h",
 			["input=","output=","help"])
 	except getopt.error, msg:
 		print msg
@@ -231,7 +242,7 @@ def main(argv):
 	gmatrix = gain.calculate_gain()
 	ranked_attrs = gain.mutual_information()
 
-	gain.print_matrix(outfile,ranked_attrs,gmatrix)
+	gain.print_tsv(outfile,ranked_attrs,gmatrix)
 
 if __name__ == '__main__':
 	sys.exit(main(sys.argv))
