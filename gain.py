@@ -128,7 +128,6 @@ class GAIN:
 		reordered.append([])
 
 		outfile.write('\n'.join('\t'.join(row) for row in reordered))
-		return
 
 	def print_matrix(self, outfile, idcs, mat, colspace = 2, ndigits = 5):
 		"""Prints the GAIN matrix in a nicely formatted fashion."""
@@ -233,7 +232,7 @@ Options:
 		if opt in ('-i', '--input'):
 			infile = open(arg)
 		if opt in ('-o', '--output'):
-			output = open(arg, 'w')
+			outfile = open(arg, 'w')
 		if opt in ('-h','--help'):
 			print help
 			return 0
