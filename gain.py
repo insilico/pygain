@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 from __future__ import division
-import sys, os, string, math, csv, numpy
-import scipy.stats.distributions as ssd
+import sys, math, csv
+import getopt
 from itertools import izip
 
 def transpose(a):
@@ -100,27 +100,13 @@ class Entropy:
 	                        for b in self.uppertrin(t, n - 1):
 	                                yield (a,) + b
 
-class DataProperties(object):
-	"""
-	Data Mining Class
-	Brett McKinney March 06, 2006
-	usage:
-			from data_mining_class import DataProperties
-			data = DataProperties('tab_dlm_file.tab')
-			num_attributes = data.num_attributes
-			print num_attributes
-	(ave_score, sorted_attributes)=data.relieff_analysis(nearest_nbs = 10)
-			
-	"""
-	def __init__(self, infilename):
-		raw = open( infilename,'r')
-		reader = csv.reader(raw, delimiter=" ")
+class GAIN:
+	def __init__(self, infile):
+		reader = csv.reader(infile, delimiter=" ")
 
 		# CSV readers are iterable, so just pull all of our data in at once.
 		self.attributes = reader.next()[5:]
 		rows = [map(self.translate,row[5:]) for row in reader]
-
-		raw.close()
 
 		self.data = transpose(rows)
 
@@ -133,7 +119,7 @@ class DataProperties(object):
 			return None
 		return int(x)
 
-	def print_matrix(self, idcs, mat, colspace = 2, ndigits = 5):
+	def print_matrix(self, outfile, idcs, mat, colspace = 2, ndigits = 5):
 		"""Prints the GAIN matrix in a nicely formatted fashion."""
 		for i in idcs:
 			name = self.attributes[i]
@@ -141,10 +127,10 @@ class DataProperties(object):
 			# determine spacing based on header column lengths
 			# if negative, spaces will be 0
 			n_spaces = (ndigits + 2) - len(name)
-			sys.stdout.write(name + " " * n_spaces)
+			outfile.write(name + " " * n_spaces)
 			# always add column spaces in between
-			sys.stdout.write(" " * colspace)
-		print
+			outfile.write(" " * colspace)
+		outfile.write('\n')
 		for i in idcs:
 			for j in idcs:
 				name = self.attributes[j]
@@ -152,9 +138,9 @@ class DataProperties(object):
 				# Format matrix values using float formatting rules
 				fltstr = "%." + str(ndigits) + "f"
 				fltfmt = fltstr % mat[i][j]
-				sys.stdout.write(fltfmt + " " * n_spaces)
-				sys.stdout.write(" " * colspace)
-			print
+				outfile.write(fltfmt + " " * n_spaces)
+				outfile.write(" " * colspace)
+			outfile.write('\n')
 
 	def calculate_gain(self, cutoff = 0.0):
 		"""Computes and returns matrix of GAIN scores.  Scores below the cutoff are set to 0"""
@@ -209,3 +195,43 @@ class DataProperties(object):
 				for i in idcs
 					if i != self.class_idx),
 			reverse=True)
+
+def main(argv):
+	help = """Usage: %s [OPTIONS]
+	
+	Construct GAIN matrix from PLINK RAW file
+
+	Options:
+	    --input	-i	Input file (default: stdin)
+	    --output	-o	Output file (default: stdout)
+	    --help		display this help and exit
+	""" % argv[0].split('/')[-1]
+
+	try:
+		opts, args = getopt.getopt(argv[1:], "i:o:h",
+			["input=","output=","help"])
+	except getopt.error, msg:
+		print msg
+		return 0
+
+	infile = sys.stdin
+	outfile = sys.stdout
+
+	# Parse arguments
+	for opt, arg in opts:
+		if opt in ('-i', '--input'):
+			infile = open(arg)
+		if opt in ('-o', '--output'):
+			output = open(arg, 'w')
+		if opt in ('-h','--help'):
+			print help
+			return 0
+
+	gain = GAIN(infile)
+	gmatrix = gain.calculate_gain()
+	ranked_attrs = gain.mutual_information()
+
+	gain.print_matrix(outfile,ranked_attrs,gmatrix)
+
+if __name__ == '__main__':
+	sys.exit(main(sys.argv))
