@@ -121,13 +121,12 @@ class GAIN:
 
 	def print_tsv(self, outfile, idcs, mat, ndigits=5):
 		"""Print the GAIN matrix in tab-separated value format"""
+		writer = csv.writer(outfile, delimiter='\t')
+
 		format = lambda f: "%%.%df" % ndigits % f
 
-		reordered = [[format(mat[i][j]) for i in idcs] for j in idcs]
-		reordered.insert(0,[self.attributes[i] for i in idcs])
-		reordered.append([])
-
-		outfile.write('\n'.join('\t'.join(row) for row in reordered))
+		writer.writerow([self.attributes[i] for i in idcs])
+		writer.writerows([[format(mat[i][j]) for i in idcs] for j in idcs])
 
 	def print_matrix(self, outfile, idcs, mat, colspace = 2, ndigits = 5):
 		"""Prints the GAIN matrix in a nicely formatted fashion."""
