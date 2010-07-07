@@ -160,12 +160,12 @@ class GAIN:
 			if i == self.class_idx:
 				continue
 
-			gain_mat[i][i] = -self.autointeraction(i)
+			gain_mat[i][i] = max(-self.autointeraction(i),0)
 
 			for j in range(i+1,attrs):
 				if j == self.class_idx:
 					continue
-				gain_mat[i][j] = self.interaction_information(i,j)
+				gain_mat[i][j] = max(self.interaction_information(i,j),0)
 				gain_mat[j][i] = gain_mat[i][j]
 
 		return gain_mat
