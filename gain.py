@@ -128,6 +128,17 @@ class GAIN:
 		writer.writerow([self.attributes[i] for i in idcs])
 		writer.writerows([[format(mat[i][j]) for i in idcs] for j in idcs])
 
+	def export_sif(self, outfile, idcs, mat, ndigits=5):
+		"""Export GAIN matrix to Cytoscape .sif format"""
+		writer = csv.writer(outfile, delimiter='\t')
+
+		format = lambda f: "%%.%df" % ndigits % f
+
+		for j in idcs:
+			for i in idcs:
+				if i > j:
+					writer.writerow([self.attributes[j], format(mat[i][j]), self.attributes[i]]) 
+
 	def print_matrix(self, outfile, idcs, mat, colspace = 2, ndigits = 5):
 		"""Prints the GAIN matrix in a nicely formatted fashion."""
 		for i in idcs:
@@ -212,24 +223,28 @@ Construct GAIN matrix from PLINK RAW file
 
 Options:
     --input	-i	Input file (default: stdin)
+    --export-sif	-e	Export Cytoscape .sif file
     --output	-o	Output file (default: stdout)
     --help		display this help and exit
 	""" % argv.pop(0).split('/')[-1]
 
 	try:
-		opts, args = getopt.getopt(argv, "i:o:h",
-			["input=","output=","help"])
+		opts, args = getopt.getopt(argv, "i:e:o:h",
+			["input=","export-sif=","output=","help"])
 	except getopt.error, msg:
 		print msg
 		return 0
 
 	infile = sys.stdin
 	outfile = sys.stdout
+	siffile = sys.stdout 
 
 	# Parse arguments
 	for opt, arg in opts:
 		if opt in ('-i', '--input'):
 			infile = open(arg)
+		if opt in ('-e', '--export-sif'):
+			siffile= open(arg, 'w')
 		if opt in ('-o', '--output'):
 			outfile = open(arg, 'w')
 		if opt in ('-h','--help'):
@@ -240,7 +255,10 @@ Options:
 	gmatrix = gain.calculate_gain()
 	ranked_attrs = gain.mutual_information()
 
-	gain.print_tsv(outfile,ranked_attrs,gmatrix)
+	if siffile != "":
+		gain.export_sif(siffile,ranked_attrs,gmatrix)
+	else:
+		gain.print_tsv(outfile,ranked_attrs,gmatrix)
 
 if __name__ == '__main__':
 	sys.exit(main(sys.argv))
