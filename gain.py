@@ -223,7 +223,7 @@ Construct GAIN matrix from PLINK RAW file
 
 Options:
     --input	-i	Input file (default: stdin)
-    --export-sif	-e	Export Cytoscape .sif file
+    --export-sif -e	Export Cytoscape .sif file
     --output	-o	Output file (default: stdout)
     --help		display this help and exit
 	""" % argv.pop(0).split('/')[-1]
