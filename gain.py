@@ -101,23 +101,41 @@ class Entropy:
 	                                yield (a,) + b
 
 class GAIN:
-	def __init__(self, infile):
-		reader = csv.reader(infile, delimiter=" ")
+	def __init__(self, infile, filetype = "raw"):
+		# set delimiter based on extension, .tab is \t, .raw is space
+		sep= " "
+		if filetype == "tab":
+			sep = "\t"
+		reader = csv.reader(infile, delimiter=sep)
 
 		# CSV readers are iterable, so just pull all of our data in at once.
-		self.attributes = reader.next()[5:]
-		rows = [map(self.translate,row[5:]) for row in reader]
+		self.attributes = None
+		rows = None
+		self.class_idx = None 
+		if filetype== "raw":
+			self.attributes = reader.next()[5:]
+			rows = [map(self.translate,row[5:]) for row in reader]
+			self.class_idx = 0
+		elif filetype== "tab":
+			self.attributes = reader.next()
+			rows = [map(self.translate,row) for row in reader]
+			self.class_idx = len(self.attributes) - 1 
 
 		self.data = transpose(rows)
 
-		self.class_idx = 0
 
 		self.entropy = Entropy(self.data,self.class_idx,precompute=2)
 
 	def translate(self,x):
 		if x == "NA":
 			return None
-		return int(x)
+		else:
+			retx = ""
+			try:
+				retx = int(x)
+			except:
+				retx = x	
+		return retx 
 
 	def print_tsv(self, outfile, idcs, mat, ndigits=5):
 		"""Print the GAIN matrix in tab-separated value format"""
@@ -223,7 +241,7 @@ Construct GAIN matrix from PLINK RAW file
 
 Options:
     --input	-i	Input file (default: stdin)
-    --export-sif	-e	Export Cytoscape .sif file
+    --export-sif -e	Export Cytoscape .sif file
     --output	-o	Output file (default: stdout)
     --help		display this help and exit
 	""" % argv.pop(0).split('/')[-1]
@@ -237,12 +255,17 @@ Options:
 
 	infile = sys.stdin
 	outfile = sys.stdout
-	siffile = sys.stdout 
+	# assume no sif export by default
+	siffile = None 
+
+	ext = ""
 
 	# Parse arguments
 	for opt, arg in opts:
 		if opt in ('-i', '--input'):
 			infile = open(arg)
+			# file extension
+			ext = arg.split(".")[-1].lower()
 		if opt in ('-e', '--export-sif'):
 			siffile= open(arg, 'w')
 		if opt in ('-o', '--output'):
@@ -251,14 +274,13 @@ Options:
 			print help
 			return 0
 
-	gain = GAIN(infile)
+	gain = GAIN(infile, ext)
 	gmatrix = gain.calculate_gain()
 	ranked_attrs = gain.mutual_information()
 
-	if siffile != "":
+	if siffile:
 		gain.export_sif(siffile,ranked_attrs,gmatrix)
-	else:
-		gain.print_tsv(outfile,ranked_attrs,gmatrix)
+	gain.print_tsv(outfile,ranked_attrs,gmatrix)
 
 if __name__ == '__main__':
 	sys.exit(main(sys.argv))
