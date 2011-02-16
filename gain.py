@@ -237,7 +237,8 @@ Options:
 
 	infile = sys.stdin
 	outfile = sys.stdout
-	siffile = sys.stdout 
+	# assume no sif export by default
+	siffile = None 
 
 	# Parse arguments
 	for opt, arg in opts:
@@ -255,10 +256,9 @@ Options:
 	gmatrix = gain.calculate_gain()
 	ranked_attrs = gain.mutual_information()
 
-	if siffile != "":
+	if siffile:
 		gain.export_sif(siffile,ranked_attrs,gmatrix)
-	else:
-		gain.print_tsv(outfile,ranked_attrs,gmatrix)
+	gain.print_tsv(outfile,ranked_attrs,gmatrix)
 
 if __name__ == '__main__':
 	sys.exit(main(sys.argv))
