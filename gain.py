@@ -258,7 +258,7 @@ Options:
 	# assume no sif export by default
 	siffile = None 
 
-	ext = ""
+	ext = "raw" # default to raw if stdin
 
 	# Parse arguments
 	for opt, arg in opts:
