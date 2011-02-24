@@ -1,4 +1,15 @@
 #!/usr/bin/env python
+# GAIN - Genetic Association Interaction Network tool 
+
+# GAIN takes an input PLINK .raw or tab-delimited file, calculates
+# the interaction information, and outputs a GAIN matrix (in tab-delimited)
+# format).  An optional mode can be used to create a Cytoscape .sif file
+# that can be used for visualization in Cytoscape.
+#
+# Authors:  Brett McKinney <brett.mckinney@gmail.com>
+#           Nick Davis <nick@nickdavis.name> 
+#           Ahwan Pandey <ahwan-pandey@utulsa.edu>  
+#           Chris Johnson <chris-johnson@utulsa.edu>
 from __future__ import division
 import sys, math, csv
 import getopt
