@@ -248,13 +248,13 @@ class GAIN:
 def main(argv):
 	help = """Usage: %s [OPTIONS]
 
-Construct GAIN matrix from PLINK RAW file
+Construct GAIN matrix from PLINK .raw or tab-delimited file
 
 Options:
+    --help      -h	display this help and exit
     --input	-i	Input file (default: stdin)
     --export-sif -e	Export Cytoscape .sif file
     --output	-o	Output file (default: stdout)
-    --help		display this help and exit
 	""" % argv.pop(0).split('/')[-1]
 
 	try:
