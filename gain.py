@@ -251,15 +251,16 @@ def main(argv):
 Construct GAIN matrix from PLINK .raw or tab-delimited file
 
 Options:
+    --version           display program version
     --help      -h	display this help and exit
     --input	-i	Input file (default: stdin)
-    --export-sif -e	Export Cytoscape .sif file
     --output	-o	Output file (default: stdout)
+    --export-sif -e	Export Cytoscape .sif file
 	""" % argv.pop(0).split('/')[-1]
 
 	try:
 		opts, args = getopt.getopt(argv, "i:e:o:h",
-			["input=","export-sif=","output=","help"])
+			["input=","export-sif=","output=","help", "version"])
 	except getopt.error, msg:
 		print msg
 		return 0
@@ -284,6 +285,9 @@ Options:
 		if opt in ('-h','--help'):
 			print help
 			return 0
+		if opt in ('--version'):
+		    print 'gain.py 0.1'
+		    return 0
 
 	gain = GAIN(infile, ext)
 	gmatrix = gain.calculate_gain()
