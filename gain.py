@@ -286,7 +286,7 @@ Options:
 			print help
 			return 0
 		if opt in ('--version'):
-		    print 'gain.py 0.1'
+		    print 'gain.py 0.1.0'
 		    return 0
 
 	gain = GAIN(infile, ext)
