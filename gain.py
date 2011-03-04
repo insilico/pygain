@@ -115,36 +115,31 @@ class GAIN:
 	def __init__(self, infile, filetype = "raw", filter = None):
 		# set delimiter based on extension, .tab is \t, .raw is space
 		sep= " "
+		# number of columns to skip in beginning of input, 5 for PLINK .raw format
+		skipcols = 5
 		if filetype == "tab":
 			sep = "\t"
+			skipcols = 0
 		reader = csv.reader(infile, delimiter=sep)
 
 		# CSV readers are iterable, so just pull all of our data in at once.
-		self.attributes = None
-		rows = None
-		self.class_idx = None 
-		if filetype== "raw":
-			self.attributes = reader.next()[5:]
-			rows = [map(self.translate,row[5:]) for row in reader]
-		elif filetype== "tab":
-			self.attributes = reader.next()
-			rows = [map(self.translate,row) for row in reader]
+		self.attributes = reader.next()[skipcols:]
+		rows = [map(self.translate,row[skipcols:]) for row in reader]
 
 		self.data = transpose(rows)
 
 		# filter SNPs
 		if filter:
 			filtsnps = [line.strip() for line in filter.readlines()]
-			# get matching snps and corresponding indicies
+			# get matching snps and corresponding indices
 			matchsnps = list(set(self.attributes) & set(filtsnps))
 			idxs = [self.attributes.index(attr) for attr in matchsnps]
 			# only keep columns that aren't in exclusion list
 			self.data = [self.data[i] for i in xrange(len(self.data)) if i not in idxs] 
 			self.attributes = [self.attributes[i] for i in xrange(len(self.attributes)) if i not in idxs]
 		
-		if filetype == "raw":
-			self.class_idx = 0
-		elif filetype == "tab":
+		self.class_idx = 0
+		if filetype == "tab":
 			self.class_idx = len(self.attributes) - 1
 
 		self.entropy = Entropy(self.data,self.class_idx,precompute=2)
