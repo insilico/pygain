@@ -101,7 +101,7 @@ class Entropy:
 	                                yield (a,) + b
 
 class GAIN:
-	def __init__(self, infile, filetype = "raw"):
+	def __init__(self, infile, filetype = "raw", filter = None):
 		# set delimiter based on extension, .tab is \t, .raw is space
 		sep= " "
 		if filetype == "tab":
@@ -123,6 +123,15 @@ class GAIN:
 
 		self.data = transpose(rows)
 
+		# filter SNPs
+		filtsnps = [line.strip() for line in filter.readlines()]
+		for attr in self.attributes:
+			if attr in filtsnps:
+				idx = self.attributes(attr)
+				self.attributes.remove(attr)
+				self.data = self.data[0:idx] + self.data[idx + 1:] 
+		print self.data
+		sys.exit()
 
 		self.entropy = Entropy(self.data,self.class_idx,precompute=2)
 
@@ -241,6 +250,7 @@ Construct GAIN matrix from PLINK RAW file
 
 Options:
     --input	-i	Input file (default: stdin)
+    --filter		Filter to exclude SNPs listed in file
     --export-sif -e	Export Cytoscape .sif file
     --output	-o	Output file (default: stdout)
     --help		display this help and exit
@@ -248,15 +258,16 @@ Options:
 
 	try:
 		opts, args = getopt.getopt(argv, "i:e:o:h",
-			["input=","export-sif=","output=","help"])
+			["input=","filter=","export-sif=","output=","help"])
 	except getopt.error, msg:
 		print msg
 		return 0
 
 	infile = sys.stdin
 	outfile = sys.stdout
-	# assume no sif export by default
+	# assume no sif export or filter by default
 	siffile = None 
+	filtfile = None
 
 	ext = "raw" # default to raw if stdin
 
@@ -268,13 +279,15 @@ Options:
 			ext = arg.split(".")[-1].lower()
 		if opt in ('-e', '--export-sif'):
 			siffile= open(arg, 'w')
+		if opt in ('--filter'):
+			filtfile = open(arg)
 		if opt in ('-o', '--output'):
 			outfile = open(arg, 'w')
 		if opt in ('-h','--help'):
 			print help
 			return 0
 
-	gain = GAIN(infile, ext)
+	gain = GAIN(infile, ext, filtfile)
 	gmatrix = gain.calculate_gain()
 	ranked_attrs = gain.mutual_information()
 
