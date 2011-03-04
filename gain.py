@@ -1,4 +1,15 @@
 #!/usr/bin/env python
+# GAIN - Genetic Association Interaction Network tool 
+
+# GAIN takes an input PLINK .raw or tab-delimited file, calculates
+# the interaction information, and outputs a GAIN matrix (in tab-delimited)
+# format).  An optional mode can be used to create a Cytoscape .sif file
+# that can be used for visualization in Cytoscape.
+#
+# Authors:  Brett McKinney <brett.mckinney@gmail.com>
+#           Nick Davis <nick@nickdavis.name> 
+#           Ahwan Pandey <ahwan-pandey@utulsa.edu>  
+#           Chris Johnson <chris-johnson@utulsa.edu>
 from __future__ import division
 import sys, math, csv
 import getopt
@@ -246,19 +257,20 @@ class GAIN:
 def main(argv):
 	help = """Usage: %s [OPTIONS]
 
-Construct GAIN matrix from PLINK RAW file
+Construct GAIN matrix from PLINK .raw or tab-delimited file
 
 Options:
+    --version           display program version
+    --help      -h	display this help and exit
     --input	-i	Input file (default: stdin)
     --filter		Filter to exclude SNPs listed in file
     --export-sif -e	Export Cytoscape .sif file
     --output	-o	Output file (default: stdout)
-    --help		display this help and exit
 	""" % argv.pop(0).split('/')[-1]
 
 	try:
 		opts, args = getopt.getopt(argv, "i:e:o:h",
-			["input=","filter=","export-sif=","output=","help"])
+			["input=","filter=","export-sif=","output=","help", "version"])
 	except getopt.error, msg:
 		print msg
 		return 0
@@ -286,6 +298,9 @@ Options:
 		if opt in ('-h','--help'):
 			print help
 			return 0
+		if opt in ('--version'):
+		    print 'gain.py 0.1.0'
+		    return 0
 
 	gain = GAIN(infile, ext, filtfile)
 	gmatrix = gain.calculate_gain()
