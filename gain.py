@@ -141,8 +141,6 @@ class GAIN:
 				idx = self.attributes(attr)
 				self.attributes.remove(attr)
 				self.data = self.data[0:idx] + self.data[idx + 1:] 
-		print self.data
-		sys.exit()
 
 		self.entropy = Entropy(self.data,self.class_idx,precompute=2)
 
