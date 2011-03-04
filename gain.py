@@ -126,21 +126,26 @@ class GAIN:
 		if filetype== "raw":
 			self.attributes = reader.next()[5:]
 			rows = [map(self.translate,row[5:]) for row in reader]
-			self.class_idx = 0
 		elif filetype== "tab":
 			self.attributes = reader.next()
 			rows = [map(self.translate,row) for row in reader]
-			self.class_idx = len(self.attributes) - 1 
 
 		self.data = transpose(rows)
 
 		# filter SNPs
-		filtsnps = [line.strip() for line in filter.readlines()]
-		for attr in self.attributes:
-			if attr in filtsnps:
-				idx = self.attributes(attr)
-				self.attributes.remove(attr)
-				self.data = self.data[0:idx] + self.data[idx + 1:] 
+		if filter:
+			filtsnps = [line.strip() for line in filter.readlines()]
+			# get matching snps and corresponding indicies
+			matchsnps = list(set(self.attributes) & set(filtsnps))
+			idxs = [self.attributes.index(attr) for attr in matchsnps]
+			# only keep columns that aren't in exclusion list
+			self.data = [self.data[i] for i in xrange(len(self.data)) if i not in idxs] 
+			self.attributes = [self.attributes[i] for i in xrange(len(self.attributes)) if i not in idxs]
+		
+		if filetype == "raw":
+			self.class_idx = 0
+		elif filetype == "tab":
+			self.class_idx = len(self.attributes) - 1
 
 		self.entropy = Entropy(self.data,self.class_idx,precompute=2)
 
