@@ -30,9 +30,10 @@ Additional parameters:
 	Options:
 		--version       display program version
 		--help      -h	display this help and exit
-		--input	-i		Input file (default: stdin)
-		--output	-o	Output file (default: stdout)
+		--input	-i	    	Input file (default: stdin)
+		--filter		Filter to exclude SNPs listed in file
 		--export-sif -e	Export Cytoscape .sif file
+		--output	-o	Output file (default: stdout)
 
 ### Contributors ###
 See AUTHORS file.
